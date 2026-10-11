@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlockLand Shaders — build in the browser</title>
+<meta name="description" content="A free browser block-building sandbox with realistic shadows, bloom, god rays and animated water. Runs on WebGL2.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="cross"></div>
+  <div id="info"></div>
+  <div id="blockname"></div>
+  <div id="hotbar"></div>
+</div>
+
+<main id="menu">
+  <section class="panel">
+    <h1>BlockLand<span>Shaders</span></h1>
+    <p class="lede">Dig, stack and light up an island, with soft sun shadows, bloom, god rays and moving water.</p>
+    <button id="play" class="primary">Play</button>
+
+    <details open>
+      <summary>Shader settings</summary>
+      <div class="grid">
+        <label class="chk"><input type="checkbox" id="s_shadows"> Sun shadows</label>
+        <label class="chk"><input type="checkbox" id="s_bloom"> Bloom</label>
+        <label class="chk"><input type="checkbox" id="s_rays"> God rays</label>
+        <label class="chk"><input type="checkbox" id="s_waves"> Waves &amp; swaying leaves</label>
+        <label class="chk"><input type="checkbox" id="s_clouds"> Clouds</label>
+        <label class="chk"><input type="checkbox" id="s_auto"> Day / night cycle</label>
+      </div>
+      <label class="row">Time of day <output id="o_time"></output>
+        <input type="range" id="s_time" min="0" max="24" step="0.05"></label>
+      <label class="row">Exposure <output id="o_exp"></output>
+        <input type="range" id="s_exp" min="0.5" max="1.6" step="0.05"></label>
+      <label class="row">Shadow quality
+        <select id="s_shres"><option value="1024">Low (1024)</option><option value="2048">Medium (2048)</option><option value="4096">High (4096)</option></select></label>
+      <label class="row">Render scale <output id="o_scale"></output>
+        <input type="range" id="s_scale" min="0.5" max="1" step="0.05"></label>
+      <label class="row">Field of view <output id="o_fov"></output>
+        <input type="range" id="s_fov" min="60" max="100" step="1"></label>
+      <label class="row">Mouse sensitivity <output id="o_sens"></output>
+        <input type="range" id="s_sens" min="0.3" max="2.5" step="0.05"></label>
+    </details>
+
+    <div class="actions">
+      <button id="reset">Reset settings</button>
+      <button id="newworld">New world</button>
+    </div>
+  </section>
+
+  <aside class="keys">
+    <h2>Controls</h2>
+    <dl>
+      <dt>W A S D</dt><dd>Move</dd>
+      <dt>Space</dt><dd>Jump / swim up (tap twice to fly)</dd>
+      <dt>Ctrl</dt><dd>Sprint</dd>
+      <dt>Shift</dt><dd>Fly down</dd>
+      <dt>Left click</dt><dd>Break block</dd>
+      <dt>Right click</dt><dd>Place block</dd>
+      <dt>1–0 / wheel</dt><dd>Pick block</dd>
+      <dt>T</dt><dd>Day / night cycle</dd>
+      <dt>V / B</dt><dd>Shadows / bloom</dd>
+      <dt>R</dt><dd>Back to spawn</dd>
+      <dt>Esc</dt><dd>Pause</dd>
+    </dl>
+    <p class="fine">Your builds save in this browser automatically.</p>
+  </aside>
+</main>
+
+<div id="nogl" class="hidden">
+  <h2>WebGL2 isn't available</h2>
+  <p>Turn on hardware acceleration in your browser settings, or try a recent version of Chrome, Edge, Firefox or Safari.</p>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>
