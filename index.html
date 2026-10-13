@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lakshay's World</title>
+<meta name="description" content="A block-built travel journal: walk through the Himalayas, Delhi, Agra, Jaipur and Udaipur and open the Wayfare Safes for photos, stories and lessons from each place.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<!-- in-game HUD -->
+<div id="hud" class="hidden">
+  <div id="cross"></div>
+  <div id="info"></div>
+  <div id="place"></div>
+  <div id="vaultlabel" class="hidden"><i></i>Wayfare Safe</div>
+  <div id="vaultprompt" class="hidden"><b>Click here to open</b><small>Wayfare Safe &middot; <span id="vp-name"></span></small></div>
+  <div id="blockname"></div>
+  <div id="hotbar"></div>
+  <div id="keyhints"><kbd>E</kbd> Map <kbd>P</kbd> View <kbd>H</kbd> Help</div>
+</div>
+<div id="warp"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<!-- loading screen -->
+<section id="loading" class="screen dirt">
+  <div class="load-inner">
+    <div id="load-pct">0%</div>
+    <div class="loadbox"><div class="lb1"><div class="lb2"><div class="lb3"><div class="lb4"><div id="load-fill"></div></div></div></div></div></div>
+    <p id="load-msg">Generating terrain…</p>
+    <p class="load-sub">Building Lakshay's World</p>
+  </div>
+</section>
+
+<!-- title / pause menu -->
+<section id="title" class="screen hidden">
+  <div class="title-wrap">
+    <p class="welcome">Welcome to</p>
+    <h1 id="world-title">Lakshay's World</h1>
+    <span class="splash">Open the safes!</span>
+    <p class="tag" id="world-tag"></p>
+    <div class="menu-buttons">
+      <button class="mc-btn big" id="btn-play">Enter World</button>
+      <button class="mc-btn big hidden" id="btn-map">Open Map (E)</button>
+      <div class="row2">
+        <button class="mc-btn" id="btn-skin">Choose Skin</button>
+        <button class="mc-btn" id="btn-settings">Settings</button>
+      </div>
+      <button class="mc-btn" id="btn-guide">How to play</button>
+    </div>
+    <p class="fine">Best on a desktop or laptop with a keyboard and mouse.</p>
+  </div>
+</section>
+
+<!-- skin picker -->
+<section id="skin" class="screen modal hidden">
+  <div class="panel skin-panel">
+    <h2>Choose your look</h2>
+    <div class="skin-body">
+      <div class="skin-stage"><canvas id="skin-preview" width="200" height="400"></canvas><b id="skin-name"></b><small id="skin-tag"></small></div>
+      <div id="skin-grid"></div>
+    </div>
+    <p class="fine">Press <kbd>P</kbd> in the world to see yourself in third person.</p>
+    <button class="mc-btn" id="skin-done">Done</button>
+  </div>
+</section>
+
+<!-- settings -->
+<section id="settings" class="screen modal hidden">
+  <div class="panel settings-panel">
+    <h2>Settings</h2>
+    <div class="cols">
+      <div>
+        <h3>Look</h3>
+        <label class="row">Shader look
+          <select id="s_preset"><option value="balanced">Balanced</option><option value="cinematic">Cinematic</option><option value="vivid">Vivid</option><option value="performance">Performance</option></select></label>
+        <div class="chips"><button class="chip" data-t="8.5">Morning</button><button class="chip" data-t="12.5">Midday</button><button class="chip" data-t="17.4">Golden hour</button></div>
+        <label class="row">Time of day <output id="o_time"></output>
+          <input type="range" id="s_time" min="7" max="17.8" step="0.05"></label>
+        <div class="grid">
+          <label class="chk"><input type="checkbox" id="s_auto"> Drift the sun</label>
+          <label class="chk"><input type="checkbox" id="s_shadows"> Sun shadows</label>
+          <label class="chk"><input type="checkbox" id="s_bloom"> Bloom</label>
+          <label class="chk"><input type="checkbox" id="s_rays"> God rays</label>
+          <label class="chk"><input type="checkbox" id="s_waves"> Waves &amp; leaves</label>
+          <label class="chk"><input type="checkbox" id="s_clouds"> Clouds</label>
+        </div>
+        <label class="row">Bloom strength <output id="o_bloomstr"></output><input type="range" id="s_bloomstr" min="0" max="1.5" step="0.05"></label>
+        <label class="row">God ray strength <output id="o_raystr"></output><input type="range" id="s_raystr" min="0" max="1.2" step="0.05"></label>
+        <label class="row">Colour saturation <output id="o_sat"></output><input type="range" id="s_sat" min="0.7" max="1.7" step="0.02"></label>
+        <label class="row">Exposure <output id="o_exp"></output><input type="range" id="s_exp" min="0.5" max="1.6" step="0.05"></label>
+      </div>
+      <div>
+        <h3>Game</h3>
+        <label class="row">Camera view
+          <select id="s_view"><option value="0">First person</option><option value="1">Third person</option><option value="2">Front view</option></select></label>
+        <label class="row">Field of view <output id="o_fov"></output><input type="range" id="s_fov" min="60" max="100" step="1"></label>
+        <label class="row">Mouse sensitivity <output id="o_sens"></output><input type="range" id="s_sens" min="0.3" max="2.5" step="0.05"></label>
+        <h3>Performance</h3>
+        <label class="row">Shadow quality
+          <select id="s_shres"><option value="1024">Low (1024)</option><option value="2048">Medium (2048)</option><option value="4096">High (4096)</option></select></label>
+        <label class="row">Render scale <output id="o_scale"></output><input type="range" id="s_scale" min="0.5" max="1" step="0.05"></label>
+        <h3>Hints</h3>
+        <label class="chk"><input type="checkbox" id="s_hints"> Show key hint pop-ups</label>
+        <button class="mc-btn small" id="hints-again">Show hints again</button>
+        <h3>Reset</h3>
+        <div class="actions"><button class="mc-btn small" id="reset">Reset settings</button><button class="mc-btn small" id="newworld">Reset my builds</button></div>
+      </div>
+    </div>
+    <button class="mc-btn" id="settings-done">Done</button>
+  </div>
+</section>
+
+<!-- key guide -->
+<section id="guide" class="screen modal hidden">
+  <div class="panel guide-panel">
+    <h2>How to play</h2>
+    <dl class="keys">
+      <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move</dd>
+      <dt><kbd>Space</kbd></dt><dd>Jump. Tap twice to fly, <kbd>Shift</kbd> to descend</dd>
+      <dt><kbd>Ctrl</kbd></dt><dd>Sprint</dd>
+      <dt><kbd>E</kbd></dt><dd>Open the map and travel to any place</dd>
+      <dt><kbd>Click</kbd></dt><dd>Open a Wayfare Safe (look at it first)</dd>
+      <dt><kbd>P</kbd></dt><dd>Change view: first person, third person, front</dd>
+      <dt><kbd>Left</kbd> / <kbd>Right</kbd></dt><dd>Break / place a block</dd>
+      <dt><kbd>1</kbd>&ndash;<kbd>0</kbd></dt><dd>Pick a hotbar slot (or use the wheel)</dd>
+      <dt><kbd>Z</kbd><kbd>X</kbd></dt><dd>Change the block in your slot</dd>
+      <dt><kbd>T</kbd></dt><dd>Drift the sun from morning to sunset</dd>
+      <dt><kbd>V</kbd><kbd>B</kbd></dt><dd>Shadows / bloom on and off</dd>
+      <dt><kbd>R</kbd></dt><dd>Back to the start</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Pause menu</dd>
+    </dl>
+    <p class="fine">Find the glowing purple portal in the Taj Mahal garden. Walk in and stay still to see the night side.</p>
+    <button class="mc-btn" id="guide-done">Got it</button>
+  </div>
+</section>
+
+<!-- parchment map -->
+<section id="map" class="screen hidden">
+  <div class="map-layout">
+    <div class="map-frame">
+      <div id="map-wrap">
+        <canvas id="map-canvas"></canvas>
+        <div id="map-pins"></div>
+        <div id="map-you" title="You are here"><b></b><i></i></div>
+      </div>
+    </div>
+    <aside class="map-side">
+      <h2>Wayfare Log</h2>
+      <p id="map-count"></p>
+      <div id="map-log"></div>
+      <p class="fine"><kbd>E</kbd> or <kbd>Esc</kbd> closes the map. Click a pin or a name to travel.</p>
+      <button class="mc-btn small" id="map-close">Close map</button>
+    </aside>
+  </div>
+</section>
+
+<!-- Wayfare Safe: photos and stories -->
+<section id="book" class="screen hidden">
+  <div class="book-wrap">
+    <div class="book-head"><span class="chip-safe"><i></i>Wayfare Safe</span><b id="bk-place"></b><button id="bk-close" class="mc-btn small">Close (Esc)</button></div>
+    <div id="bk-book" class="book">
+      <div class="spine"></div>
+      <article id="bk-left" class="page left">
+        <div class="pg-top"><span id="bk-page"></span></div>
+        <h2 id="bk-title"></h2>
+        <p id="bk-date" class="date"></p>
+        <div id="bk-story" class="story"></div>
+        <div id="bk-learn" class="learn"><b>What I learned</b><span></span></div>
+      </article>
+      <figure id="bk-right" class="page right">
+        <div class="win"><div class="titlebar"><i></i><i></i><i></i></div><img id="bk-photo" alt=""></div>
+        <figcaption id="bk-caption"></figcaption>
+      </figure>
+    </div>
+    <div class="book-nav"><button id="bk-prev" class="mc-btn small">&#9664; Prev</button><div id="bk-dots"></div><button id="bk-next" class="mc-btn small">Next &#9654;</button></div>
+    <p class="fine">Scroll, use <kbd>&larr;</kbd><kbd>&rarr;</kbd>, or the buttons to turn pages.</p>
+  </div>
+</section>
+
+<div id="nogl" class="hidden">
+  <h2>WebGL2 isn't available</h2>
+  <p>Turn on hardware acceleration in your browser settings, or try a recent version of Chrome, Edge, Firefox or Safari.</p>
+</div>
+
+<script src="js/world.js"></script>
+<script src="js/skins.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/content.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
