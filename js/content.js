@@ -27,14 +27,6 @@ window.SITE = {
           learning: 'True art doesn\'t shout; it holds its ground with quiet dignity across centuries.'
         },
         {
-          photo: 'assets/photos/agra/IMG_20261019_160851_224.jpeg',
-          title: 'Echoes of Chini Ka Rauza',
-          date: 'October 2026',
-          caption: 'Persian glazed tilework at Chini Ka Rauza, Yamuna River',
-          story: 'Away from the main crowds lies this Persian gem on the riverbank. Traces of bright turquoise, ultramarine, and yellow glazed tiles still cling to the floral friezes, whispering tales of Afzal Khan\'s poetry and scholarship.',
-          learning: 'Some of the greatest treasures are the quiet corners that most people rush past.'
-        },
-        {
           photo: 'assets/photos/agra/IMG_20261019_160851_420.jpeg',
           title: 'Arches of Red Sandstone',
           date: 'October 2026',
