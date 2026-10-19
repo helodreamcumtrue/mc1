@@ -1,4 +1,4 @@
-# Lakshay's World
+# Dholakpurr
 
 A block-built travel journal. Visitors walk through a stylised map of northern India (Himalayas, Kashmir, Himachal,
 Delhi, Agra, Jaipur, Udaipur), press **E** for a parchment map, travel to any place, and open the **Wayfare Safe**

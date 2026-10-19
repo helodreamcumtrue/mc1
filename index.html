@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lakshay's World</title>
-<meta name="description" content="A block-built travel journal: walk through the Himalayas, Delhi, Agra, Jaipur and Udaipur and open the Wayfare Safes for photos, stories and lessons from each place.">
+<title>Dholakpurr</title>
+<meta name="description" content="A block-built travel journal: explore Agra, Tungnath & Chandrashila, Jammu & Kashmir, Triund & McLeod Ganj, and Udaipur. Open the Wayfare Safes for photos, stories and lessons from each place.">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="shortcut icon" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
@@ -33,7 +35,7 @@
     <div id="load-pct">0%</div>
     <div class="loadbox"><div class="lb1"><div class="lb2"><div class="lb3"><div class="lb4"><div id="load-fill"></div></div></div></div></div></div>
     <p id="load-msg">Generating terrain…</p>
-    <p class="load-sub">Building Lakshay's World</p>
+    <p class="load-sub">Building Dholakpurr</p>
   </div>
 </section>
 
@@ -41,7 +43,7 @@
 <section id="title" class="screen hidden">
   <div class="title-wrap">
     <p class="welcome">Welcome to</p>
-    <h1 id="world-title">Lakshay's World</h1>
+    <h1 id="world-title">Dholakpurr</h1>
     <span class="splash">Open the safes!</span>
     <p class="tag" id="world-tag"></p>
     <div class="menu-buttons">
@@ -160,26 +162,56 @@
   </div>
 </section>
 
-<!-- Wayfare Safe: photos and stories -->
-<section id="book" class="screen hidden">
-  <div class="book-wrap">
-    <div class="book-head"><span class="chip-safe"><i></i>Wayfare Safe</span><b id="bk-place"></b><button id="bk-close" class="mc-btn small">Close (Esc)</button></div>
-    <div id="bk-book" class="book">
-      <div class="spine"></div>
-      <article id="bk-left" class="page left">
-        <div class="pg-top"><span id="bk-page"></span></div>
-        <h2 id="bk-title"></h2>
-        <p id="bk-date" class="date"></p>
-        <div id="bk-story" class="story"></div>
-        <div id="bk-learn" class="learn"><b>What I learned</b><span></span></div>
-      </article>
-      <figure id="bk-right" class="page right">
-        <div class="win"><div class="titlebar"><i></i><i></i><i></i></div><img id="bk-photo" alt=""></div>
-        <figcaption id="bk-caption"></figcaption>
-      </figure>
+<!-- Wayfare Safe: Masonry Gallery & Image Viewer -->
+<section id="book" class="screen modal hidden">
+  <div class="gallery-container">
+    <header class="gallery-header">
+      <div class="gallery-title-group">
+        <span class="chip-safe"><i></i>Wayfare Safe</span>
+        <div class="gallery-place-meta">
+          <h2 id="bk-place">Place Name</h2>
+          <span id="gallery-region-badge" class="gallery-badge region">Region</span>
+          <span id="gallery-count-badge" class="gallery-badge count">0 Photos</span>
+        </div>
+      </div>
+      <div class="gallery-controls">
+        <button id="bk-close" class="mc-btn small">Close (Esc)</button>
+      </div>
+    </header>
+
+    <div id="gallery-scroll-area" class="gallery-scroll-area">
+      <div id="gallery-masonry" class="masonry-gallery"></div>
     </div>
-    <div class="book-nav"><button id="bk-prev" class="mc-btn small">&#9664; Prev</button><div id="bk-dots"></div><button id="bk-next" class="mc-btn small">Next &#9654;</button></div>
-    <p class="fine">Scroll, use <kbd>&larr;</kbd><kbd>&rarr;</kbd>, or the buttons to turn pages.</p>
+
+    <footer class="gallery-footer">
+      <span class="fine">Click any photo to view full size &middot; <kbd>Esc</kbd> to close</span>
+    </footer>
+  </div>
+
+  <!-- Fullscreen Single Image Viewer (Pure Image, No Text Page) -->
+  <div id="gallery-lightbox" class="lightbox-modal hidden" aria-modal="true" role="dialog">
+    <div class="lightbox-backdrop" id="lb-backdrop"></div>
+    <div class="lightbox-shell viewer-mode">
+      <header class="lb-header">
+        <div class="lb-header-info">
+          <span id="lb-counter" class="lb-counter-pill">1 / 1</span>
+          <b id="lb-place-name"></b>
+        </div>
+        <button id="lb-close" class="mc-btn small lb-close-btn" title="Back to gallery (Esc)">&times;</button>
+      </header>
+
+      <div class="lb-stage-only">
+        <button id="lb-prev" class="mc-btn lb-arrow prev" title="Previous photo (Left Arrow)">&#9664;</button>
+        <div class="lb-image-holder">
+          <img id="lb-photo" src="" alt="Photo">
+        </div>
+        <button id="lb-next" class="mc-btn lb-arrow next" title="Next photo (Right Arrow)">&#9654;</button>
+      </div>
+
+      <nav class="lb-thumbs-bar">
+        <div id="lb-thumbs" class="lb-thumbs-track"></div>
+      </nav>
+    </div>
   </div>
 </section>
 

@@ -222,10 +222,10 @@ function updateAnimals(dt, px, pz) {
   }
 }
 
-function buildAnimals(px, pz) {
+function buildAnimals(px, pz, py) {
   for (const a of animals) {
-    const dx = a.x - px, dz = a.z - pz;
-    if (dx * dx + dz * dz > 80 * 80) continue;
+    const dx = a.x - px, dz = a.z - pz, dy = (py !== undefined) ? (a.y - py) : 0;
+    if (dx * dx + dz * dz + dy * dy * 0.7 > 80 * 80) continue;
     const S = SP[a.sp];
     const T = { x: a.x, y: a.y, z: a.z, cs: Math.cos(a.yaw), sn: Math.sin(a.yaw), s: S.sc };
     if (S.bird) peacock(T, a); else quadruped(T, a, S.q);
@@ -292,15 +292,18 @@ function groundFor(x, z) {
 function hf(i, s) { return BL.hash2(i, s, 99) ; }
 
 function buildGlow(px, py, pz, time, night) {
+  if (!night && py > 75) return;
   const T = { x: 0, y: 0, z: 0, cs: 1, sn: 0, s: 1 };
   if (night) {
-    for (let i = 0; i < 70; i++) {
-      const x = wrap(hf(i, 1) * 64, px, 64), z = wrap(hf(i, 2) * 64, pz, 64), g = groundFor(x, z);
-      if (g < 0) continue;
-      const y = g + 0.6 + hf(i, 3) * 2.6 + Math.sin(time * 0.9 + i) * 0.35;
-      const bx = x + Math.sin(time * 0.5 + i * 2) * 0.8, bz = z + Math.cos(time * 0.43 + i) * 0.8;
-      const blink = 0.5 + 0.5 * Math.sin(time * 2 + i * 5);
-      if (blink > 0.15) box(T, bx, y, bz, 0.09, 0.09, 0.09, C.glow, 0, 0, 0, 1);
+    if (py <= 110) {
+      for (let i = 0; i < 70; i++) {
+        const x = wrap(hf(i, 1) * 64, px, 64), z = wrap(hf(i, 2) * 64, pz, 64), g = groundFor(x, z);
+        if (g < 0) continue;
+        const y = g + 0.6 + hf(i, 3) * 2.6 + Math.sin(time * 0.9 + i) * 0.35;
+        const bx = x + Math.sin(time * 0.5 + i * 2) * 0.8, bz = z + Math.cos(time * 0.43 + i) * 0.8;
+        const blink = 0.5 + 0.5 * Math.sin(time * 2 + i * 5);
+        if (blink > 0.15) box(T, bx, y, bz, 0.09, 0.09, 0.09, C.glow, 0, 0, 0, 1);
+      }
     }
     for (let i = 0; i < 38; i++) {
       const x = wrap(hf(i, 7) * 110 + time * 0.35, px, 110), z = wrap(hf(i, 8) * 110 + Math.sin(time * 0.1 + i) * 4, pz, 110);
@@ -325,7 +328,7 @@ function buildGlow(px, py, pz, time, night) {
 const counts = { a: 0, v: 0, g: 0 };
 function build(P) {
   nf = 0;
-  buildAnimals(P.x, P.z);
+  buildAnimals(P.x, P.z, P.y);
   counts.a = nf / (STRIDE * 4) * 6;
   buildAvatar(P);
   counts.v = nf / (STRIDE * 4) * 6;

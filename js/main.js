@@ -164,6 +164,21 @@ vec3 sky(vec3 d){
   }
   return c;
 }
+vec3 skyWater(vec3 d){
+  float h = max(d.y, 0.0);
+  vec3 c = mix(uHor, uZen, pow(h, 0.45));
+  if (d.y < 0.0) c = mix(uHor, uHor * vec3(0.25, 0.4, 0.5), clamp(-d.y * 4.0, 0.0, 1.0));
+  float up = smoothstep(-0.03, 0.02, d.y);
+  float sd = max(dot(d, uSunDir), 0.0);
+  c += uSunCol * (pow(sd, 6.0) * 0.06 * (1.0 - h) + pow(sd, 60.0) * 0.25) * up;
+  if (d.y > 0.0 && uClouds > 0.5) {
+    vec2 q = d.xz / (d.y + 0.12) * 0.6 + vec2(uTime * 0.012, uTime * 0.004);
+    float n = vn(q * 1.5) * 0.65 + vn(q * 3.0) * 0.35;
+    float cv = smoothstep(0.48, 0.72, n);
+    c = mix(c, uCloudCol, cv * smoothstep(0.0, 0.2, d.y) * 0.92);
+  }
+  return c;
+}
 `;
 
 const FS_QUAD_VS = V300 + `
@@ -291,7 +306,7 @@ void main(){
   vec3 V = normalize(uCam - vPos);
   float fres = pow(1.0 - max(dot(n, V), 0.0), 4.0) * 0.85 + 0.08;
   vec3 rd = reflect(-V, n);
-  vec3 refl = sky(rd);
+  vec3 refl = skyWater(rd);
   float sh = shadowAt(vLP);
   vec3 lit = uAmbSky * 0.6 + uLightCol * 0.12 * sh;
   vec3 base = vec3(0.04, 0.32, 0.4) * lit;
@@ -536,16 +551,20 @@ function uploadMesh(m, verts, inds) {
 }
 
 const chunks = [];
-for (let i = 0; i < CXN * CZN; i++) chunks.push({ op: mkMesh(), wt: mkMesh() });
+for (let i = 0; i < CXN * CZN; i++) chunks.push({ op: mkMesh(), wt: mkMesh(), minY: 0, maxY: H });
 
 function buildChunk(cx, cz) {
   const ch = chunks[cx + cz * CXN];
   const ov = [], oi = [], wv = [], wi = [];
   const x0 = cx * CS, z0 = cz * CS;
   const ao = [0, 0, 0, 0];
+  let minY = H, maxY = 0, hasBlocks = false;
   for (let y = 0; y < H; y++) for (let z = z0; z < z0 + CS; z++) for (let x = x0; x < x0 + CS; x++) {
     const b = blocks[idx(x, y, z)];
     if (!b) continue;
+    hasBlocks = true;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
     const isW = b === WATER || b === PORTAL;
     const lower = b === WATER && get(x, y + 1, z) !== WATER;
     for (let f = 0; f < 6; f++) {
@@ -575,6 +594,8 @@ function buildChunk(cx, cz) {
       else is.push(base, base + 1, base + 2, base, base + 2, base + 3);
     }
   }
+  ch.minY = hasBlocks ? minY : 0;
+  ch.maxY = hasBlocks ? maxY + 1 : 0;
   uploadMesh(ch.op, ov, oi);
   uploadMesh(ch.wt, wv, wi);
 }
@@ -948,7 +969,8 @@ document.addEventListener('wheel', e => { if (!locked) return; sel = (sel + (e.d
 let lastSpace = 0;
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
-  if (!locked) return;
+  if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+  if (!locked || e.repeat) return;
   if (e.code.startsWith('Digit')) { const n = parseInt(e.code.slice(5), 10); sel = (n + 9) % 10; refreshHotbar(); }
   if (e.code === 'KeyF') { pl.fly = !pl.fly; pl.vy = 0; }
   if (e.code === 'Space') { const t = performance.now(); if (t - lastSpace < 280) { pl.fly = !pl.fly; pl.vy = 0; } lastSpace = t; }
@@ -961,7 +983,6 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyT') { S.autoTime = !S.autoTime; syncUI(); saveSettings(); }
   if (e.code === 'KeyB') { S.bloom = !S.bloom; syncUI(); saveSettings(); }
   if (e.code === 'KeyV') { S.shadows = !S.shadows; syncUI(); saveSettings(); }
-  if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
 });
 document.addEventListener('keyup', e => { keys[e.code] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
@@ -1026,15 +1047,50 @@ window.addEventListener('beforeunload', () => { if (editsDirty) saveEdits(); });
  * ------------------------------------------------------------------ */
 let vpMat = new Float32Array(16), lightVP = new Float32Array(16);
 
-const cull = { ex: 0, ez: 0, fx: 0, fz: 0, behind: false };
+const frustumPlanes = new Float32Array(24);
+function updateFrustumPlanes(m, out) {
+  out[0] = m[3] + m[0]; out[1] = m[7] + m[4]; out[2] = m[11] + m[8]; out[3] = m[15] + m[12];
+  out[4] = m[3] - m[0]; out[5] = m[7] - m[4]; out[6] = m[11] - m[8]; out[7] = m[15] - m[12];
+  out[8] = m[3] + m[1]; out[9] = m[7] + m[5]; out[10] = m[11] + m[9]; out[11] = m[15] + m[13];
+  out[12] = m[3] - m[1]; out[13] = m[7] - m[5]; out[14] = m[11] - m[9]; out[15] = m[15] - m[13];
+  out[16] = m[3] + m[2]; out[17] = m[7] + m[6]; out[18] = m[11] + m[10]; out[19] = m[15] + m[14];
+  out[20] = m[3] - m[2]; out[21] = m[7] - m[6]; out[22] = m[11] - m[10]; out[23] = m[15] - m[14];
+
+  for (let i = 0; i < 24; i += 4) {
+    const l = Math.hypot(out[i], out[i + 1], out[i + 2]);
+    if (l > 1e-6) {
+      const inv = 1 / l;
+      out[i] *= inv; out[i + 1] *= inv; out[i + 2] *= inv; out[i + 3] *= inv;
+    }
+  }
+}
+
+function chunkInFrustum(planes, x0, y0, z0, x1, y1, z1) {
+  for (let i = 0; i < 24; i += 4) {
+    const a = planes[i], b = planes[i + 1], c = planes[i + 2], d = planes[i + 3];
+    const px = a > 0 ? x1 : x0;
+    const py = b > 0 ? y1 : y0;
+    const pz = c > 0 ? z1 : z0;
+    if (a * px + b * py + c * pz + d < 0) return false;
+  }
+  return true;
+}
+
+const cull = { ex: 0, ez: 0 };
 function drawChunks(water, mode) {
+  const maxDistSq = 180 * 180;
   for (let i = 0; i < chunks.length; i++) {
-    const m = water ? chunks[i].wt : chunks[i].op;
+    const ch = chunks[i];
+    const m = water ? ch.wt : ch.op;
     if (!m.n) continue;
-    if (mode) {
+    if (mode === 1) {
+      const cx = (i % CXN) * CS, cz = ((i / CXN) | 0) * CS;
+      const dx = cx + 8 - cull.ex, dz = cz + 8 - cull.ez;
+      if (dx * dx + dz * dz > maxDistSq) continue;
+      if (!chunkInFrustum(frustumPlanes, cx, ch.minY || 0, cz, cx + CS, ch.maxY || H, cz + CS)) continue;
+    } else if (mode === 2) {
       const dx = (i % CXN) * CS + 8 - cull.ex, dz = ((i / CXN) | 0) * CS + 8 - cull.ez;
-      if (mode === 2) { if (dx * dx + dz * dz > 110 * 110) continue; }
-      else if (cull.behind && dx * cull.fx + dz * cull.fz < -26) continue;
+      if (dx * dx + dz * dz > 95 * 95) continue;
     }
     gl.bindVertexArray(m.vao);
     gl.drawElements(gl.TRIANGLES, m.n, gl.UNSIGNED_INT, 0);
@@ -1046,7 +1102,8 @@ function computeLightVP() {
   const f = [-ld[0], -ld[1], -ld[2]];
   const r = norm3(cross3(f, up)), u = cross3(r, f);
   const half = 62, ts = (half * 2) / SM.size;
-  const c = [pl.x, pl.y, pl.z];
+  const groundY = Math.min(48, Math.max(22, pl.y));
+  const c = [pl.x, groundY, pl.z];
   const cx = dot3(c, r), cy = dot3(c, u);
   const sx = Math.round(cx / ts) * ts - cx, sy = Math.round(cy / ts) * ts - cy;
   const sc = [c[0] + r[0] * sx + u[0] * sy, c[1] + r[1] * sx + u[1] * sy, c[2] + r[2] * sx + u[2] * sy];
@@ -1070,11 +1127,11 @@ function render() {
   const under = get(Math.floor(eye[0]), Math.floor(eye[1]), Math.floor(eye[2])) === WATER;
   env.fogCol = under ? [0.02, 0.16, 0.22] : env.hor;
   const fogDen = under ? 0.09 : 0.0085;
-  const fh = Math.hypot(fwd[0], fwd[2]);
-  cull.ex = eye[0]; cull.ez = eye[2]; cull.behind = fh > 0.35 && Math.abs(fwd[1]) < 0.8; cull.fx = fwd[0] / (fh || 1); cull.fz = fwd[2] / (fh || 1);
+  cull.ex = eye[0]; cull.ez = eye[2];
   const proj = M4.persp(S.fov * Math.PI / 180, aspect, 0.1, 1200);
   const view = M4.lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
   vpMat = M4.mul(proj, view);
+  updateFrustumPlanes(vpMat, frustumPlanes);
 
   /* shadow pass */
   const doShadow = S.shadows && env.lightCol[0] + env.lightCol[1] + env.lightCol[2] > 0.01;
@@ -1248,10 +1305,12 @@ function processQueue() {
   if (!queue.length && queueDone) { const f = queueDone; queueDone = null; f(); }
 }
 const PLACES = [
-  ['The Night Portal', 88, 182, 9], ['Taj Mahal, Agra', 150, 176, 48], ['India Gate, Delhi', 138, 142, 40], ['Red Fort, Delhi', 146, 112, 36], ['Qutub Minar, Delhi', 108, 150, 24],
-  ['Hawa Mahal, Jaipur', 55, 113, 14], ['Jaipur, Rajasthan', 55, 128, 30], ['Amber Fort, Jaipur', 96, 104, 20], ['Jal Mahal, Jaipur', 50, 98, 16],
-  ['Udaipur, Rajasthan', 55, 218, 42], ['Mughal Gardens, Kashmir', 80, 64, 18], ['Srinagar, Kashmir', 46, 64, 34], ['McLeod Ganj, Himachal', 96, 50, 22],
-  ['Shimla, Himachal', 120, 78, 26], ['Manali, Himachal', 158, 54, 32], ['Key Monastery, Spiti', 206, 56, 28], ['Chandratal Lake', 184, 36, 16]
+  ['The Night Portal', 88, 182, 10],
+  ['Taj Mahal & Agra', 150, 176, 50],
+  ['Lake Pichola & Udaipur', 50, 234, 45],
+  ['Jammu & Kashmir Highway', 46, 80, 40],
+  ['Triund & McLeod Ganj', 96, 58, 35],
+  ['Tungnath & Chandrashila', 184, 48, 35]
 ];
 let placeName = '', placeTimer = 0;
 function updatePlace(dt) {

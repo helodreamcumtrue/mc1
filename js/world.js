@@ -838,26 +838,11 @@ function mansion(x0, z0, w, d, g) {
 
 /* ================================================================== */
 const LOCATIONS = [
-  { id: 'taj', name: 'Taj Mahal, Agra', region: 'Uttar Pradesh', x: 80, z: 179, yaw: -Math.PI / 2, blurb: 'White marble tomb above the Yamuna' },
-  { id: 'plainsvillage', name: 'Village by the Yamuna', region: 'Uttar Pradesh', x: 214, z: 162, yaw: 0, blurb: 'Wheat fields and mud-brick homes' },
-  { id: 'indiagate', name: 'India Gate, Delhi', region: 'Delhi', x: 100, z: 142, yaw: -Math.PI / 2, blurb: 'War memorial on a long green avenue' },
-  { id: 'redfort', name: 'Red Fort, Delhi', region: 'Delhi', x: 146, z: 146, yaw: 0, blurb: 'Red sandstone walls and marble halls' },
-  { id: 'qutub', name: 'Qutub Minar, Delhi', region: 'Delhi', x: 94, z: 164, yaw: -Math.PI / 4, blurb: 'A five-storey tower of red stone' },
-  { id: 'hawa', name: 'Hawa Mahal, Jaipur', region: 'Rajasthan', x: 55, z: 124, yaw: 0, blurb: 'The pink palace of a thousand windows' },
-  { id: 'amber', name: 'Amber Fort, Jaipur', region: 'Rajasthan', x: 96, z: 134, yaw: 0, blurb: 'A hill fort above the plains' },
-  { id: 'jal', name: 'Jal Mahal, Jaipur', region: 'Rajasthan', x: 50, z: 89, yaw: Math.PI, blurb: 'A palace floating in Man Sagar lake' },
-  { id: 'lakepalace', name: 'Lake Palace, Udaipur', region: 'Rajasthan', x: 50, z: 234, yaw: 0, blurb: 'White marble on Lake Pichola' },
-  { id: 'monsoon', name: 'Monsoon Palace, Udaipur', region: 'Rajasthan', x: 28, z: 226, yaw: 0, blurb: 'A hilltop palace above the city' },
-  { id: 'rajvillage', name: 'Rajasthani village', region: 'Rajasthan', x: 28, z: 178, yaw: 0, blurb: 'Whitewashed houses and camels' },
-  { id: 'dal', name: 'Dal Lake, Srinagar', region: 'Kashmir', x: 46, z: 80, yaw: 0, blurb: 'Houseboats, shikaras and chinar trees' },
-  { id: 'nishat', name: 'Mughal Gardens, Kashmir', region: 'Kashmir', x: 61, z: 64, yaw: -Math.PI / 2, blurb: 'Terraced gardens and water channels' },
-  { id: 'shankar', name: 'Shankaracharya Temple', region: 'Kashmir', x: 62, z: 94, yaw: 0, blurb: 'A stone shrine on a hill above the valley' },
-  { id: 'dharam', name: 'McLeod Ganj, Dharamshala', region: 'Himachal Pradesh', x: 96, z: 58, yaw: 0, blurb: 'Golden roofs and prayer flags' },
-  { id: 'shimla', name: 'Shimla Ridge', region: 'Himachal Pradesh', x: 120, z: 96, yaw: 0, blurb: 'Colonial streets on a mountain ridge' },
-  { id: 'manali', name: 'Hadimba Temple, Manali', region: 'Himachal Pradesh', x: 154, z: 58, yaw: 0, blurb: 'A wooden pagoda in the pine forest' },
-  { id: 'oldmanali', name: 'Mountain village (Old Manali)', region: 'Himachal Pradesh', x: 172, z: 70, yaw: 0, blurb: 'Stone and timber homes in the valley' },
-  { id: 'spiti', name: 'Key Monastery, Spiti', region: 'Himachal Pradesh', x: 206, z: 68, yaw: 0, blurb: 'A whitewashed monastery in the cold desert' },
-  { id: 'chandratal', name: 'Chandratal Lake', region: 'Himachal Pradesh', x: 184, z: 48, yaw: 0, blurb: 'A high-altitude lake under snow peaks' },
+  { id: 'agra', name: 'Taj Mahal & Agra', region: 'Uttar Pradesh', x: 80, z: 179, yaw: -Math.PI / 2, blurb: 'White marble monument, red sandstone arches, and historic streets of Agra' },
+  { id: 'chandrashila', name: 'Tungnath & Chandrashila', region: 'Uttarakhand', x: 184, z: 48, yaw: 0, blurb: 'Tungnath temple and the snow-capped summit of Chandrashila' },
+  { id: 'jammu', name: 'Jammu & Kashmir Highway', region: 'Jammu & Kashmir', x: 46, z: 80, yaw: 0, blurb: 'Scenic mountain highways, pine valleys, and road journeys across Jammu & Kashmir' },
+  { id: 'triund', name: 'Triund & McLeod Ganj', region: 'Himachal Pradesh', x: 96, z: 58, yaw: 0, blurb: 'The trail through oak forests to Triund ridge and McLeod Ganj cafes' },
+  { id: 'udaipur', name: 'Lake Pichola & Udaipur', region: 'Rajasthan', x: 50, z: 234, yaw: 0, blurb: 'The City of Lakes, sunlit havelis, and tranquil waters of Pichola' },
   { id: 'portal', name: 'The Night Portal', region: 'Special', x: 84, z: 186, yaw: -0.6, blurb: 'Step through to see the night side', novault: true }
 ];
 

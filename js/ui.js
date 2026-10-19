@@ -160,52 +160,126 @@ function placeholder(text, seed) {
   return (phCache[key] = c.toDataURL());
 }
 
-/* ------------------------------------------------------------------ vault book */
-const bk = { id: null, L: null, list: [], i: 0, wheel: 0, last: 0, busy: false };
+/* ------------------------------------------------------------------ Wayfare Masonry Gallery & Image Viewer */
+const bk = {
+  id: null,
+  L: null,
+  list: [],
+  i: 0,
+  lightboxOpen: false
+};
+
 ui.openBook = id => {
   const L = BL.LOCATIONS.find(l => l.id === id); if (!L) return;
-  bk.id = id; bk.L = L; bk.list = entriesFor(L); bk.i = 0; bk.wheel = 0;
+  bk.id = id; bk.L = L; bk.list = entriesFor(L); bk.i = 0; bk.lightboxOpen = false;
   markVisited(id);
-  setMode('book'); renderBook(0, true);
+  setMode('book');
+  renderMasonryGallery();
 };
-function renderBook(dir, first) {
-  const e = bk.list[bk.i], n = bk.list.length;
-  $('bk-place').textContent = bk.L.name;
-  $('bk-page').textContent = `Page ${bk.i + 1} of ${n}`;
-  $('bk-title').textContent = e.title || bk.L.name;
-  $('bk-date').textContent = e.date || '';
-  $('bk-story').innerHTML = '';
-  String(e.story || '').split(/\n\s*\n/).forEach(p => { const pe = el('p'); pe.textContent = p; $('bk-story').appendChild(pe); });
-  const learn = $('bk-learn'); learn.classList.toggle('hidden', !e.learning); learn.querySelector('span').textContent = e.learning || '';
-  const img = $('bk-photo'); const fallback = placeholder(bk.L.name, bk.i + bk.id.length);
-  img.onerror = () => { img.onerror = null; img.src = fallback; };
-  img.alt = e.caption || bk.L.name;
-  img.src = e.photo ? e.photo : fallback;
-  $('bk-caption').textContent = e.caption || '';
-  const dots = $('bk-dots'); dots.innerHTML = '';
-  bk.list.forEach((_, k) => { const d = el('button', 'dot' + (k === bk.i ? ' on' : '')); d.setAttribute('aria-label', 'Page ' + (k + 1)); d.addEventListener('click', () => bookGo(k - bk.i)); dots.appendChild(d); });
-  $('bk-prev').disabled = bk.i === 0; $('bk-next').disabled = bk.i === n - 1;
-  const book = $('bk-book');
-  if (first) book.animate([{ transform: 'scale(.86) translateY(30px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
-  else if (dir) {
-    $('bk-right').animate([{ transform: `perspective(900px) rotateY(${dir > 0 ? 70 : -70}deg)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'ease-out' });
-    $('bk-left').animate([{ transform: `translateY(${dir > 0 ? 18 : -18}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'ease-out' });
-  }
+
+function renderMasonryGallery() {
+  const L = bk.L, list = bk.list;
+  $('bk-place').textContent = L.name;
+  $('gallery-region-badge').textContent = L.region || 'Region';
+  $('gallery-count-badge').textContent = `${list.length} Photo${list.length === 1 ? '' : 's'}`;
+
+  const container = $('gallery-masonry');
+  container.innerHTML = '';
+  const scrollArea = $('gallery-scroll-area');
+  scrollArea.scrollTop = 0;
+
+  list.forEach((e, idx) => {
+    const item = el('div', 'masonry-item');
+    const fallback = placeholder(bk.L.name, idx + bk.id.length);
+
+    const img = el('img');
+    img.alt = e.caption || e.title || bk.L.name;
+    img.loading = 'lazy';
+    img.src = e.photo || fallback;
+    img.onerror = () => { img.onerror = null; img.src = fallback; };
+
+    item.appendChild(img);
+    item.addEventListener('click', () => openLightbox(idx));
+    container.appendChild(item);
+  });
 }
-function bookGo(d) {
+
+/* ---------- Pure Fullscreen Single-Image Viewer (Text Page Removed) ---------- */
+function openLightbox(index) {
+  bk.i = Math.max(0, Math.min(bk.list.length - 1, index));
+  bk.lightboxOpen = true;
+  $('gallery-lightbox').classList.remove('hidden');
+  renderLightboxCurrent();
+  renderLightboxThumbs();
+}
+
+function closeLightbox() {
+  bk.lightboxOpen = false;
+  $('gallery-lightbox').classList.add('hidden');
+}
+
+function lightboxGo(d) {
+  if (!bk.list.length) return;
   const ni = Math.max(0, Math.min(bk.list.length - 1, bk.i + d));
-  if (ni === bk.i) return; const dir = ni > bk.i ? 1 : -1; bk.i = ni; renderBook(dir);
+  if (ni === bk.i) return;
+  bk.i = ni;
+  renderLightboxCurrent();
+  updateLightboxThumbs();
 }
+
+function renderLightboxCurrent() {
+  const e = bk.list[bk.i], n = bk.list.length;
+  if (!e) return;
+  const fallback = placeholder(bk.L.name, bk.i + bk.id.length);
+
+  $('lb-place-name').textContent = bk.L.name;
+  $('lb-counter').textContent = `${bk.i + 1} / ${n}`;
+
+  const photo = $('lb-photo');
+  photo.onerror = () => { photo.onerror = null; photo.src = fallback; };
+  photo.alt = e.caption || e.title || bk.L.name;
+  photo.src = e.photo || fallback;
+
+  $('lb-prev').disabled = bk.i === 0;
+  $('lb-next').disabled = bk.i === n - 1;
+}
+
+function renderLightboxThumbs() {
+  const track = $('lb-thumbs');
+  track.innerHTML = '';
+  bk.list.forEach((e, k) => {
+    const btn = el('button', 'lb-thumb-btn' + (k === bk.i ? ' on' : ''));
+    btn.setAttribute('aria-label', `Photo ${k + 1}`);
+    const img = el('img');
+    const fallback = placeholder(bk.L.name, k + bk.id.length);
+    img.src = e.photo || fallback;
+    img.alt = `Photo ${k + 1}`;
+    btn.appendChild(img);
+    btn.addEventListener('click', () => {
+      bk.i = k;
+      renderLightboxCurrent();
+      updateLightboxThumbs();
+    });
+    track.appendChild(btn);
+  });
+}
+
+function updateLightboxThumbs() {
+  const thumbs = document.querySelectorAll('.lb-thumb-btn');
+  thumbs.forEach((t, k) => {
+    t.classList.toggle('on', k === bk.i);
+    if (k === bk.i) {
+      t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  });
+}
+
 function wireBook() {
-  $('bk-prev').addEventListener('click', () => bookGo(-1)); $('bk-next').addEventListener('click', () => bookGo(1));
   $('bk-close').addEventListener('click', () => setMode('play'));
-  $('book').addEventListener('wheel', ev => {
-    ev.preventDefault(); bk.wheel += ev.deltaY; const now = performance.now();
-    if (Math.abs(bk.wheel) > 40 && now - bk.last > 380) { bookGo(bk.wheel > 0 ? 1 : -1); bk.last = now; bk.wheel = 0; }
-  }, { passive: false });
-  let ty = null;
-  $('book').addEventListener('touchstart', ev => { ty = ev.touches[0].clientY; }, { passive: true });
-  $('book').addEventListener('touchend', ev => { if (ty === null) return; const dy = ty - ev.changedTouches[0].clientY; if (Math.abs(dy) > 40) bookGo(dy > 0 ? 1 : -1); ty = null; }, { passive: true });
+  $('lb-close').addEventListener('click', closeLightbox);
+  $('lb-backdrop').addEventListener('click', closeLightbox);
+  $('lb-prev').addEventListener('click', () => lightboxGo(-1));
+  $('lb-next').addEventListener('click', () => lightboxGo(1));
 }
 
 /* ------------------------------------------------------------------ parchment map */
@@ -327,9 +401,13 @@ ui.init = game => {
     if (m === 'play') { if (c === 'KeyE') { e.preventDefault(); setMode('map'); } else if (c === 'KeyH') { e.preventDefault(); setMode('guide'); } }
     else if (m === 'map') { if (c === 'KeyE' || c === 'Escape') { e.preventDefault(); setMode('play'); } }
     else if (m === 'book') {
-      if (c === 'Escape' || c === 'KeyE') setMode('play');
-      else if (['ArrowRight', 'ArrowDown', 'PageDown', 'Space'].includes(c)) { e.preventDefault(); bookGo(1); }
-      else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(c)) { e.preventDefault(); bookGo(-1); }
+      if (bk.lightboxOpen) {
+        if (c === 'Escape') closeLightbox();
+        else if (['ArrowRight', 'ArrowDown', 'Space'].includes(c)) { e.preventDefault(); lightboxGo(1); }
+        else if (['ArrowLeft', 'ArrowUp'].includes(c)) { e.preventDefault(); lightboxGo(-1); }
+      } else {
+        if (c === 'Escape' || c === 'KeyE') setMode('play');
+      }
     }
     else if (m === 'guide') { if (c === 'Escape' || c === 'KeyH') setMode(ui.started ? 'play' : 'title'); }
     else if (m === 'skin' || m === 'settings') { if (c === 'Escape') setMode('title'); }
